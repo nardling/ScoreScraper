@@ -47,11 +47,30 @@ def getGameStats(addr: str, hometeam: str, awayteam: str, gameId: int, inserter:
     gameDate = parsed_page.body.find('div', attrs={'class','n8 GameInfo__Meta'}).text
     julianGameDay = 0
     if gameDate:
-        julianGameDay = parser.parse(gameDate).toordinal()
-    try:
-        inserter.insertMeta(gameId, hometeam, awayteam, ll, ou, julianGameDay)
-    except:
-        return False
+        try:
+            julianGameDay = parser.parse(gameDate).toordinal()
+        except:
+            pass
+
+        if julianGameDay == 0:
+            try:
+                c = gameDate.find('C')
+                if c > 0:
+                    gameDate = gameDate[:c]
+                    # print ("Use altername gameDate ", gameDate)
+                    julianGameDay = parser.parse(gameDate).toordinal()
+            except:
+                pass
+        
+        if julianGameDay == 0:
+            print ("Could Not Compute Game Data for Game id ", gameId)
+
+        try:
+            return inserter.insertMeta(gameId, hometeam, awayteam, ll, ou, julianGameDay)
+        except:
+            return True
+    else:
+        print ("Could Not Compute Game Date For Game Id ", gameId)
     return True
 
 def getScore(addr: str, gameId: int, inserter: nbaScoreInserter) -> bool:
@@ -65,6 +84,12 @@ def getScore(addr: str, gameId: int, inserter: nbaScoreInserter) -> bool:
         print ("Could Not Resolve Teams")
         return True
     print(away, "@", home)
+
+    gameUrl = str.format('https://www.espn.com/nba/game/_/gameId/{}', gameId)
+    if (not getGameStats(gameUrl, home, away, gameId, inserter)):
+        print ("Skipping gameId ", gameId, " couldn't insert MetaData")
+        return True
+    
     i = x.find('playGrps', 0)
     j = x.find("]]", i)
     try:
@@ -124,24 +149,23 @@ def getScore(addr: str, gameId: int, inserter: nbaScoreInserter) -> bool:
                 
     except:
         return False
-    gameUrl = str.format('https://www.espn.com/nba/game/_/gameId/{}', gameId)
-    return getGameStats(gameUrl, home, away, gameId, inserter)
+    return True
 
 
 def init():
     n = nbaScoreInserter()
-    getScore("https://www.espn.com/nba/playbyplay/_/gameId/401468951", 401468951, n)
-    print ("entering main")
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/bos/boston-celtics", 'Celtics')
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/bkn/brooklyn-nets", 'Nets')
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/ny/new-york-knicks", 'Knicks')
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/phi/philadelphia-76ers", '76ers')
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/tor/toronto-raptors", 'Raptors')
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/den/denver-nuggets", 'Nuggets')
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/min/minnesota-timberwolves", 'Timberwolves')
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/okc/oklahoma-city-thunder", 'Thunder')
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/por/portland-trail-blazers", 'Trail Blazers')
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/utah/utah-jazz", 'Jazz')
+    # getScore("https://www.espn.com/nba/playbyplay/_/gameId/401468016", 401468016, n)
+    # print ("entering main")
+    buildList("https://www.espn.com/nba/team/schedule/_/name/bos/boston-celtics", 'Celtics')
+    buildList("https://www.espn.com/nba/team/schedule/_/name/bkn/brooklyn-nets", 'Nets')
+    buildList("https://www.espn.com/nba/team/schedule/_/name/ny/new-york-knicks", 'Knicks')
+    buildList("https://www.espn.com/nba/team/schedule/_/name/phi/philadelphia-76ers", '76ers')
+    buildList("https://www.espn.com/nba/team/schedule/_/name/tor/toronto-raptors", 'Raptors')
+    buildList("https://www.espn.com/nba/team/schedule/_/name/den/denver-nuggets", 'Nuggets')
+    buildList("https://www.espn.com/nba/team/schedule/_/name/min/minnesota-timberwolves", 'Timberwolves')
+    buildList("https://www.espn.com/nba/team/schedule/_/name/okc/oklahoma-city-thunder", 'Thunder')
+    buildList("https://www.espn.com/nba/team/schedule/_/name/por/portland-trail-blazers", 'Trail Blazers')
+    buildList("https://www.espn.com/nba/team/schedule/_/name/utah/utah-jazz", 'Jazz')
     # buildList("https://www.espn.com/nba/team/schedule/_/name/cle/cleveland-cavaliers", 'Cavaliers')
     # buildList("https://www.espn.com/nba/team/schedule/_/name/det/detroit-pistons", 'Pistons')
     # buildList("https://www.espn.com/nba/team/schedule/_/name/ind/indiana-pacers", 'Pacers')

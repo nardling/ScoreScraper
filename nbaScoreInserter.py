@@ -29,23 +29,25 @@ class nbaScoreInserter:
     def insertSubs(self, gameId: int, subIn: str, subOut: str, time: int):
         with self.con.cursor() as cur:
             try:
-                cur.execute(self.subStatement.format(gameId, subIn, subOut, time))
+                cur.execute(self.subStatement.format(gameId, subIn.replace("'", r"''") , subOut.replace("'", r"''"), time))
             except Exception as e:
                 print("Error executing insertSubs SQL: ", e)
 
     def insertScoreEvent(self, gameId: int, scorer: str, points: int, time: int):
         with self.con.cursor() as cur:
             try:
-                cur.execute(self.scorerStatement.format(gameId, scorer, points, time))
+                cur.execute(self.scorerStatement.format(gameId, scorer.replace("'", r"''"), points, time))
             except Exception as e:
                 print("Error executing insert scorer SQL: ", e)
 
-    def insertMeta(self, gameId: int, hometeam: str, visitingteam: str, line: str, overUnder: float, date: int):
+    def insertMeta(self, gameId: int, hometeam: str, visitingteam: str, line: str, overUnder: float, date: int) -> bool:
         with self.con.cursor() as cur:
             try:
                 cur.execute(self.gameMetaStatement.format(gameId, hometeam, visitingteam, line, overUnder, date))
+                return True
             except Exception as e:
                 print("Error executing insertMeta SQL: ", e)
+                return False
 
     def getMaxGameId(self, teamName: str) -> int:
         return 0

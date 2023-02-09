@@ -2,6 +2,9 @@ import requests
 import json
 from nbaScoreInserter import nbaScoreInserter
 from teamFinder import findHomeAndAway
+from bs4 import BeautifulSoup
+from timeFuncs import getTime
+from dateutil import parser
 
 # main pages are of form https://www.espn.com/nba/team/_/name/chi/chicago-bulls
 # score pages are of form /nba/recap/_/gameId/401468899
@@ -33,7 +36,23 @@ def buildList(addr: str, teamName: str) -> None:
             recap = str.format("https://www.espn.com/nba/playbyplay/_/gameId/{}", gameId)
             if (not getScore(recap, gameId, n)):
                 break
-        
+
+def getGameStats(addr: str, hometeam: str, awayteam: str, gameId: int, inserter: nbaScoreInserter) -> bool:
+    x = requests.get(addr).content.decode('utf8')
+    parsed_page = BeautifulSoup(x, features="lxml")
+    lineInfo = parsed_page.body.find('div', attrs={'class','n8 GameInfo__BettingItem flex-expand line'}).text
+    ll = lineInfo.split(':')[1]
+    overUnder = parsed_page.body.find('div', attrs={'class','n8 GameInfo__BettingItem flex-expand ou'}).text
+    ou = overUnder.split(':')[1]
+    gameDate = parsed_page.body.find('div', attrs={'class','n8 GameInfo__Meta'}).text
+    julianGameDay = 0
+    if gameDate:
+        julianGameDay = parser.parse(gameDate).toordinal()
+    try:
+        inserter.insertMeta(gameId, hometeam, awayteam, ll, ou, julianGameDay)
+    except:
+        return False
+    return True
 
 def getScore(addr: str, gameId: int, inserter: nbaScoreInserter) -> bool:
     import time
@@ -50,54 +69,63 @@ def getScore(addr: str, gameId: int, inserter: nbaScoreInserter) -> bool:
     j = x.find("]]", i)
     try:
         score = json.loads(x[i + 10:j + 2])
-        lastHomeScore = -1
-        lastVisScore = -1
+        lastHomeScore = 0
+        lastVisScore = 0
         for quarter in score:
             qtrHomeShots = 0
-            qrtVisShots = 0
+            qtrVisShots = 0
             qtrNumber = 0
             for s in quarter:
                 # filter for score change only
-                if (int(s['awayScore']) != lastVisScore or int(s['homeScore']) != lastHomeScore):
+                if 'scoringPlay' in s and s['scoringPlay']:
+                    # print (s)
+                    scorer = "?"
+                    delta = 0
+                    if 'text' in s:
+                        makesIndex = s['text'].find('makes')
+                        if (makesIndex > 0):
+                            scorer = s['text'][:makesIndex - 1]
                     qtrNumber = s['period']['number']
                     if int(s['homeScore']) != lastHomeScore:
+                        delta = int(s['homeScore']) - lastHomeScore
                         lastHomeScore = int(s['homeScore'])
                         qtrHomeShots = qtrHomeShots + 1
                     if int(s['awayScore']) != lastVisScore:
+                        delta = int(s['awayScore']) - lastVisScore
                         lastVisScore = int(s['awayScore'])
-                        qrtVisShots = qrtVisShots + 1
-
-                    tt = s['clock']['displayValue'].split(':')
-                    time = -1
-                    if len(tt) == 2:
-                        min = int(tt[0])
-                        sec = int(tt[1])
-                        time = (12 * (int(s['period']['number']) - 1) + (12 - min)) * 60 - sec
-                    else:
-                        tt = s['clock']['displayValue'].split('.')
-                        if len(tt) == 2:
-                            sec = int(tt[0])
-                            min = 0
-                            time = (12 * (int(s['period']['number']) - 1) + (12 - min)) * 60 - sec
-                    if time > 0:
+                        qtrVisShots = qtrVisShots + 1
+                    gameTime = getTime(s)
+                    if gameTime > 0:
                         try:
-                            inserter.insert(str(gameId), home, away, s['homeScore'], s['awayScore'], time)
+                            inserter.insert(str(gameId), home, away, s['homeScore'], s['awayScore'], gameTime)
+                            inserter.insertScoreEvent(gameId, scorer, delta, gameTime)
                         except:
                             pass
-                # elif 'text' in s and s['text'].find('misses') > 0:
-                    # if s['homeAway'].strip() == 'away':
-                    #     qtrVisShots = qtrVisShots + 1
-                    # elif s['homeAway'].strip() == 'home':
-                    #     qtrHomeShots = qtrHomeShots + 1
+                elif 'text' in s:
+                    entersFor = s['text'].find('enters the game for')
+                    if entersFor > 0:
+                        subIn = s['text'][:entersFor].strip()
+                        subOut = s['text'][entersFor + 20:].strip()
+                        gameTime = getTime(s)
+                        inserter.insertSubs(gameId, subIn, subOut, gameTime);
+                    elif s['text'].find('misses') > 0:
+                        try:
+                            if s['homeAway'].strip() == 'away':
+                                qtrVisShots = qtrVisShots + 1
+                            elif s['homeAway'].strip() == 'home':
+                                qtrHomeShots = qtrHomeShots + 1
+                        except Exception as e:
+                            print(e)
 
             try:
-                inserter.insertShots(str(gameId), home, away, qtrHomeShots, qrtVisShots, qtrNumber)
+                inserter.insertShots(str(gameId), home, away, qtrHomeShots, qtrVisShots, qtrNumber)
             except:
                 pass
                 
     except:
         return False
-    return True
+    gameUrl = str.format('https://www.espn.com/nba/game/_/gameId/{}', gameId)
+    return getGameStats(gameUrl, home, away, gameId, inserter)
 
 
 def init():

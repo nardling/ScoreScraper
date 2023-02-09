@@ -7,6 +7,9 @@ class nbaScoreInserter:
         self.con.autocommit = True
         self.statement: str = "INSERT INTO game_scores VALUES({}, '{}', '{}', {}, {}, {})"
         self.shotStatement: str = "INSERT INTO game_shots VALUES({}, '{}', '{}', {}, {}, {})"
+        self.subStatement: str = "INSERT INTO game_subs VALUES({}, '{}', '{}', {})"
+        self.gameMetaStatement: str = "INSERT INTO game_meta VALUES({}, '{}', '{}', '{}', {}, {})"
+        self.scorerStatement: str = "INSERT INTO game_scorers VALUES ({}, '{}', {}, {})"
 
     def insert(self, gameId: int, homeTeam: str, visitingTeam: str, homeScore: int, visitingScore: int, time: int):
         # print (self.statement.format(gameId, homeTeam, visitingTeam, homeScore, visitingScore, time))
@@ -22,6 +25,27 @@ class nbaScoreInserter:
                 cur.execute(self.shotStatement.format(gameId, homeTeam, visitingTeam, homeShots, visitingShots, time))
             except Exception as e:
                 print("Error executing SQL: ", e)
+
+    def insertSubs(self, gameId: int, subIn: str, subOut: str, time: int):
+        with self.con.cursor() as cur:
+            try:
+                cur.execute(self.subStatement.format(gameId, subIn, subOut, time))
+            except Exception as e:
+                print("Error executing insertSubs SQL: ", e)
+
+    def insertScoreEvent(self, gameId: int, scorer: str, points: int, time: int):
+        with self.con.cursor() as cur:
+            try:
+                cur.execute(self.scorerStatement.format(gameId, scorer, points, time))
+            except Exception as e:
+                print("Error executing insert scorer SQL: ", e)
+
+    def insertMeta(self, gameId: int, hometeam: str, visitingteam: str, line: str, overUnder: float, date: int):
+        with self.con.cursor() as cur:
+            try:
+                cur.execute(self.gameMetaStatement.format(gameId, hometeam, visitingteam, line, overUnder, date))
+            except Exception as e:
+                print("Error executing insertMeta SQL: ", e)
 
     def getMaxGameId(self, teamName: str) -> int:
         return 0

@@ -78,9 +78,12 @@ def getGameStats(addr: str, hometeam: str, awayteam: str, gameId: int, inserter:
         if julianGameDay == 0:
             print ("Could Not Compute Game Data for Game id ", gameId)
 
-        # print (julianGameDay, " ", gdt, " ", date.today().toordinal())
         if julianGameDay >= date.today().toordinal() and mode == 0:
             print ("Game in future or today ", gameId)
+            return -2
+
+        if julianGameDay > date.today().toordinal() and mode == 1:
+            print ("Game in future ", gameId)
             return -2
 
         try:
@@ -182,18 +185,18 @@ def init():
     n = nbaScoreInserter()
     # getScore("https://www.espn.com/nba/playbyplay/_/gameId/401468519", 401468501, n, 0)
     # print ("entering main")
-    mode = 0
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/bos/boston-celtics", 'Celtics', mode)
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/bkn/brooklyn-nets", 'Nets', mode)
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/ny/new-york-knicks", 'Knicks', mode)
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/phi/philadelphia-76ers", '76ers', mode)
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/tor/toronto-raptors", 'Raptors', mode)
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/den/denver-nuggets", 'Nuggets', mode)
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/min/minnesota-timberwolves", 'Timberwolves', mode)
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/okc/oklahoma-city-thunder", 'Thunder', mode)
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/por/portland-trail-blazers", 'Trail Blazers', mode)
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/utah/utah-jazz", 'Jazz', mode)
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/cle/cleveland-cavaliers", 'Cavaliers', mode)
+    mode = 1
+    buildList("https://www.espn.com/nba/team/schedule/_/name/bos/boston-celtics", 'Celtics', mode)
+    buildList("https://www.espn.com/nba/team/schedule/_/name/bkn/brooklyn-nets", 'Nets', mode)
+    buildList("https://www.espn.com/nba/team/schedule/_/name/ny/new-york-knicks", 'Knicks', mode)
+    buildList("https://www.espn.com/nba/team/schedule/_/name/phi/philadelphia-76ers", '76ers', mode)
+    buildList("https://www.espn.com/nba/team/schedule/_/name/tor/toronto-raptors", 'Raptors', mode)
+    buildList("https://www.espn.com/nba/team/schedule/_/name/den/denver-nuggets", 'Nuggets', mode)
+    buildList("https://www.espn.com/nba/team/schedule/_/name/min/minnesota-timberwolves", 'Timberwolves', mode)
+    buildList("https://www.espn.com/nba/team/schedule/_/name/okc/oklahoma-city-thunder", 'Thunder', mode)
+    buildList("https://www.espn.com/nba/team/schedule/_/name/por/portland-trail-blazers", 'Trail Blazers', mode)
+    buildList("https://www.espn.com/nba/team/schedule/_/name/utah/utah-jazz", 'Jazz', mode)
+    buildList("https://www.espn.com/nba/team/schedule/_/name/cle/cleveland-cavaliers", 'Cavaliers', mode)
     buildList("https://www.espn.com/nba/team/schedule/_/name/det/detroit-pistons", 'Pistons', mode)
     buildList("https://www.espn.com/nba/team/schedule/_/name/ind/indiana-pacers", 'Pacers', mode)
     buildList("https://www.espn.com/nba/team/schedule/_/name/mil/milwaukee-bucks", 'Bucks', mode)
@@ -208,11 +211,11 @@ def init():
     buildList("https://www.espn.com/nba/team/schedule/_/name/orl/orlando-magic", 'Magic', mode)
     buildList("https://www.espn.com/nba/team/schedule/_/name/wsh/washington-wizards", 'Wizards', mode)
     buildList("https://www.espn.com/nba/team/schedule/_/name/dal/dallas-mavericks", 'Mavericks', mode)
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/hou/houston-rockets", 'Rockets', mode)
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/mem/memphis-grizzlies", 'Grizzlies', mode)
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/no/new-orleans-pelicans", 'Pelicans', mode)
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/sa/san-antonio-spurs", 'Spurs', mode)
-    # buildList("https://www.espn.com/nba/team/schedule/_/name/chi/chicago-bulls", 'Bulls', mode)
+    buildList("https://www.espn.com/nba/team/schedule/_/name/hou/houston-rockets", 'Rockets', mode)
+    buildList("https://www.espn.com/nba/team/schedule/_/name/mem/memphis-grizzlies", 'Grizzlies', mode)
+    buildList("https://www.espn.com/nba/team/schedule/_/name/no/new-orleans-pelicans", 'Pelicans', mode)
+    buildList("https://www.espn.com/nba/team/schedule/_/name/sa/san-antonio-spurs", 'Spurs', mode)
+    buildList("https://www.espn.com/nba/team/schedule/_/name/chi/chicago-bulls", 'Bulls', mode)
 
 if __name__ == "__main__":
     init()
